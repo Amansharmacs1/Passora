@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { VaultProvider } from './context/VaultContext';
 import { Toaster } from 'react-hot-toast';
 
 import Navbar from './components/Navbar';
@@ -15,6 +16,8 @@ import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import Dashboard from './pages/Dashboard';
+import VaultList from './pages/VaultList';
 
 const Layout = () => {
   return (
@@ -32,7 +35,8 @@ const App = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Toaster 
+        <VaultProvider>
+          <Toaster 
           position="top-right"
           toastOptions={{
             className: 'dark:bg-gray-800 dark:text-white',
@@ -62,10 +66,47 @@ const App = () => {
                 <Settings />
               </ProtectedRoute>
             } />
+            
+            <Route path="dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="vault" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
+            <Route path="vault/favorites" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
+            <Route path="vault/archive" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
+            <Route path="vault/trash" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
+            <Route path="vault/category/:categoryName" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
+            <Route path="vault/folder/:folderId" element={
+              <ProtectedRoute>
+                <VaultList />
+              </ProtectedRoute>
+            } />
 
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        </VaultProvider>
       </AuthProvider>
     </ThemeProvider>
   );
