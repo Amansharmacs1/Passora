@@ -101,6 +101,7 @@ const Login = () => {
 
           <button
             type="button"
+            onClick={() => toast.error('Google login requires OAuth Client ID setup in Google Cloud Console.')}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <FcGoogle size={20} />

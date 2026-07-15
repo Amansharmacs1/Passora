@@ -8,7 +8,7 @@ import VaultDetailsModal from '../components/VaultDetailsModal';
 import FolderFormModal from '../components/FolderFormModal';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { FaPlus, FaSearch, FaFilter, FaSort } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaFilter, FaSort, FaShieldAlt } from 'react-icons/fa';
 import vaultService from '../services/vaultService';
 import folderService from '../services/folderService';
 import toast from 'react-hot-toast';
@@ -105,11 +105,10 @@ const VaultList = () => {
             else list = list.filter(v => !v.deleted && !v.archived);
         }
 
-        // Search query filtering
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             list = list.filter(v => 
-                v.title.toLowerCase().includes(q) || 
+                (v.title && v.title.toLowerCase().includes(q)) || 
                 (v.username && v.username.toLowerCase().includes(q)) ||
                 (v.email && v.email.toLowerCase().includes(q)) ||
                 (v.website && v.website.toLowerCase().includes(q)) ||

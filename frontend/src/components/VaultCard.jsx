@@ -60,7 +60,7 @@ const VaultCard = ({ vault, onClick, onAction }) => {
           {vault.category}
         </span>
         <span className="text-gray-400 text-xs">
-          {new Date(vault.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          {new Date(vault.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
       </div>
 

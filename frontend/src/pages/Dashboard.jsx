@@ -81,15 +81,15 @@ const Dashboard = () => {
                                             {vault.favicon ? (
                                                 <img src={vault.favicon} alt="icon" className="w-full h-full object-contain" />
                                             ) : (
-                                                <span className="text-lg text-gray-400">{vault.title.charAt(0)}</span>
+                                                <span className="text-lg text-gray-400">{vault.title ? vault.title.charAt(0) : '?'}</span>
                                             )}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{vault.title}</p>
+                                            <p className="font-medium text-gray-900 dark:text-white">{vault.title || 'Untitled'}</p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">{vault.username || vault.email}</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-gray-400">{new Date(vault.createdAt).toLocaleDateString()}</span>
+                                    <span className="text-xs text-gray-400">{new Date(vault.createdAt || Date.now()).toLocaleDateString()}</span>
                                 </li>
                             ))}
                         </ul>

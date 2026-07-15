@@ -1,15 +1,19 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
 });
 
 // Request interceptor to attach JWT
 api.interceptors.request.use(
   (config) => {
-    const user = JSON.parse(localStorage.getItem('passora_user'));
-    if (user && user.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
+    try {
+      const user = JSON.parse(localStorage.getItem('passora_user'));
+      if (user && user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    } catch (e) {
+      localStorage.removeItem('passora_user');
     }
     return config;
   },
