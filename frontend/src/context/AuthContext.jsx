@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
@@ -54,6 +55,39 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('passora_user');
     api.post('/auth/logout').catch(() => {}); // Optional call to backend
   };
+
+  // 10-minute Inactivity Auto-Logout
+  useEffect(() => {
+    if (!user) return;
+
+    let lastActivity = Date.now();
+    const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes
+
+    const updateActivity = () => {
+      lastActivity = Date.now();
+    };
+
+    window.addEventListener('mousemove', updateActivity, { passive: true });
+    window.addEventListener('keydown', updateActivity, { passive: true });
+    window.addEventListener('scroll', updateActivity, { passive: true });
+    window.addEventListener('click', updateActivity, { passive: true });
+
+    const intervalId = setInterval(() => {
+      if (Date.now() - lastActivity > INACTIVITY_LIMIT) {
+        logout();
+        toast.error('Logged out due to 10 minutes of inactivity');
+        window.dispatchEvent(new CustomEvent('auth_timeout'));
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+      window.removeEventListener('click', updateActivity);
+      clearInterval(intervalId);
+    };
+  }, [user]);
 
   const updateProfile = async (data) => {
     setLoading(true);
