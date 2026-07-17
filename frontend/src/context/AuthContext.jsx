@@ -30,6 +30,21 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
+      if (response.data.requires2FA) {
+        return response.data; // { requires2FA: true, userId: ... }
+      }
+      setUser(response.data);
+      localStorage.setItem('passora_user', JSON.stringify(response.data));
+      return response.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify2FA = async (userId, token) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/login-2fa', { userId, token });
       setUser(response.data);
       localStorage.setItem('passora_user', JSON.stringify(response.data));
       return response.data;
@@ -103,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, loading }}>
+    <AuthContext.Provider value={{ user, login, verify2FA, register, logout, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

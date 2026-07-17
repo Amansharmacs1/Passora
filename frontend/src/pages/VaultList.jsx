@@ -1,5 +1,5 @@
 import { useState, useContext, useMemo } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { VaultContext } from '../context/VaultContext';
 import Sidebar from '../components/Sidebar';
 import VaultCard from '../components/VaultCard';
@@ -12,11 +12,15 @@ import { FaPlus, FaSearch, FaFilter, FaSort, FaShieldAlt } from 'react-icons/fa'
 import vaultService from '../services/vaultService';
 import folderService from '../services/folderService';
 import toast from 'react-hot-toast';
+import { calculateStrength } from '../utils/passwordStrength';
+import MasterPasswordPrompt from '../components/MasterPasswordPrompt';
 
 const VaultList = () => {
     const { vaults, trashVaults, refreshVaultData } = useContext(VaultContext);
     const { folderId, categoryName } = useParams();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const securityFilter = searchParams.get('filter'); // strong, weak, duplicate, old
 
     // State for modals
     const [isVaultFormOpen, setIsVaultFormOpen] = useState(false);
@@ -27,6 +31,10 @@ const VaultList = () => {
     const [selectedVault, setSelectedVault] = useState(null);
     const [selectedFolder, setSelectedFolder] = useState(null);
 
+    // Master Password State
+    const [isMasterPromptOpen, setIsMasterPromptOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState(null); // { action: 'delete' | 'permanentDelete', vault }
+
     // Filter and Sort state
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('newest');
@@ -36,6 +44,26 @@ const VaultList = () => {
     const isArchive = location.pathname.includes('/archive');
     const isTrash = location.pathname.includes('/trash');
 
+    const executePendingAction = async () => {
+        setIsMasterPromptOpen(false);
+        if (!pendingAction) return;
+
+        const { action, vault } = pendingAction;
+        try {
+            if (action === 'delete') {
+                await vaultService.deleteVault(vault._id);
+                toast.success('Moved to trash');
+                refreshVaultData();
+            } else if (action === 'permanentDelete') {
+                await vaultService.permanentDeleteVault(vault._id);
+                toast.success('Permanently deleted');
+                refreshVaultData();
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Action failed');
+        }
+    };
+
     const handleVaultAction = async (action, vault) => {
         try {
             switch(action) {
@@ -44,9 +72,8 @@ const VaultList = () => {
                     setIsVaultFormOpen(true);
                     break;
                 case 'delete':
-                    await vaultService.deleteVault(vault._id);
-                    toast.success('Moved to trash');
-                    refreshVaultData();
+                    setPendingAction({ action: 'delete', vault });
+                    setIsMasterPromptOpen(true);
                     break;
                 case 'restore':
                     await vaultService.restoreVault(vault._id);
@@ -55,9 +82,8 @@ const VaultList = () => {
                     break;
                 case 'permanentDelete':
                     if (window.confirm('Are you sure you want to permanently delete this?')) {
-                        await vaultService.permanentDeleteVault(vault._id);
-                        toast.success('Permanently deleted');
-                        refreshVaultData();
+                        setPendingAction({ action: 'permanentDelete', vault });
+                        setIsMasterPromptOpen(true);
                     }
                     break;
                 case 'archive':
@@ -116,6 +142,28 @@ const VaultList = () => {
             );
         }
 
+        // Security filters
+        if (securityFilter) {
+            if (securityFilter === 'strong') {
+                list = list.filter(v => calculateStrength(v.password || '').entropy >= 60);
+            } else if (securityFilter === 'weak') {
+                list = list.filter(v => calculateStrength(v.password || '').entropy < 60);
+            } else if (securityFilter === 'old') {
+                const ninetyDaysAgo = new Date();
+                ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+                list = list.filter(v => new Date(v.passwordChangedAt || v.updatedAt) < ninetyDaysAgo);
+            } else if (securityFilter === 'duplicate') {
+                // Find all passwords that appear more than once
+                const passwordCounts = {};
+                vaults.forEach(v => {
+                    if (!v.deleted) {
+                        passwordCounts[v.password] = (passwordCounts[v.password] || 0) + 1;
+                    }
+                });
+                list = list.filter(v => passwordCounts[v.password] > 1);
+            }
+        }
+
         // Sorting
         return list.sort((a, b) => {
             if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
@@ -126,7 +174,7 @@ const VaultList = () => {
             return 0;
         });
 
-    }, [vaults, trashVaults, isTrash, isFavorites, isArchive, folderId, categoryName, searchQuery, sortBy]);
+    }, [vaults, trashVaults, isTrash, isFavorites, isArchive, folderId, categoryName, searchQuery, sortBy, securityFilter]);
 
     const getTitle = () => {
         if (isFavorites) return 'Favorites';
@@ -239,6 +287,13 @@ const VaultList = () => {
                 isOpen={isFolderFormOpen}
                 onClose={() => setIsFolderFormOpen(false)}
                 folderToEdit={selectedFolder}
+            />
+
+            <MasterPasswordPrompt
+                isOpen={isMasterPromptOpen}
+                onClose={() => setIsMasterPromptOpen(false)}
+                onSuccess={executePendingAction}
+                actionText="delete this vault item"
             />
         </div>
     );

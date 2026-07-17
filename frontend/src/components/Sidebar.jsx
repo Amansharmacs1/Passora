@@ -8,7 +8,11 @@ import {
     FaTags,
     FaPlus,
     FaEllipsisV,
-    FaTachometerAlt
+    FaTachometerAlt,
+    FaKey,
+    FaHistory,
+    FaLock,
+    FaFileExport
 } from 'react-icons/fa';
 import { VaultContext } from '../context/VaultContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +38,7 @@ const Sidebar = ({ onOpenFolderModal, onEditFolder, onDeleteFolder }) => {
                     <NavLink to="/dashboard" className={navLinkClasses}>
                         <div className="flex items-center space-x-3">
                             <FaTachometerAlt className="text-lg" />
-                            <span>Dashboard</span>
+                            <span>Security Dashboard</span>
                         </div>
                     </NavLink>
                     <NavLink to="/vault" end className={navLinkClasses}>
@@ -65,6 +69,41 @@ const Sidebar = ({ onOpenFolderModal, onEditFolder, onDeleteFolder }) => {
                         </div>
                         <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{stats.trash}</span>
                     </NavLink>
+                </div>
+
+                {/* Tools */}
+                <div>
+                    <div className="px-4 mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Tools
+                        </h4>
+                    </div>
+                    <div className="space-y-1">
+                        <NavLink to="/generator" className={navLinkClasses}>
+                            <div className="flex items-center space-x-3">
+                                <FaKey className="text-lg text-primary-500" />
+                                <span>Generator</span>
+                            </div>
+                        </NavLink>
+                        <NavLink to="/activity" className={navLinkClasses}>
+                            <div className="flex items-center space-x-3">
+                                <FaHistory className="text-lg text-primary-500" />
+                                <span>Activity Log</span>
+                            </div>
+                        </NavLink>
+                        <NavLink to="/settings/security" className={navLinkClasses}>
+                            <div className="flex items-center space-x-3">
+                                <FaLock className="text-lg text-primary-500" />
+                                <span>Security Settings</span>
+                            </div>
+                        </NavLink>
+                        <NavLink to="/settings/import-export" className={navLinkClasses}>
+                            <div className="flex items-center space-x-3">
+                                <FaFileExport className="text-lg text-primary-500" />
+                                <span>Import / Export</span>
+                            </div>
+                        </NavLink>
+                    </div>
                 </div>
 
                 {/* Folders */}

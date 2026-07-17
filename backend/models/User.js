@@ -26,6 +26,22 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    masterPassword: {
+      type: String,
+      default: null,
+    },
+    twoFactorSecret: {
+      type: String,
+      default: null,
+    },
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    autoLockTimeout: {
+      type: Number,
+      default: 15, // minutes
+    },
     verificationToken: {
       type: String,
     },
@@ -48,13 +64,24 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Middleware to hash password before saving
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+  const salt = await bcrypt.genSalt(10);
+  
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, salt);
   }
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  if (this.isModified('masterPassword') && this.masterPassword) {
+    this.masterPassword = await bcrypt.hash(this.masterPassword, salt);
+  }
+
+  next();
 });
+
+// Method to compare master passwords
+userSchema.methods.matchMasterPassword = async function (enteredMasterPassword) {
+  if (!this.masterPassword) return false;
+  return await bcrypt.compare(enteredMasterPassword, this.masterPassword);
+};
 
 const User = mongoose.model('User', userSchema);
 

@@ -6,9 +6,12 @@ import { useForm } from 'react-hook-form';
 import vaultService from '../services/vaultService';
 import toast from 'react-hot-toast';
 import { VaultContext } from '../context/VaultContext';
+import PasswordStrengthMeter from './PasswordStrengthMeter';
+import api from '../services/api';
 
 const VaultFormModal = ({ isOpen, onClose, vaultToEdit = null }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
+  const passwordValue = watch('password', '');
   const [loading, setLoading] = useState(false);
   const { fetchVaults, folders, defaultCategories } = useContext(VaultContext);
 
@@ -37,6 +40,15 @@ const VaultFormModal = ({ isOpen, onClose, vaultToEdit = null }) => {
       });
     }
   }, [vaultToEdit, reset, isOpen]);
+
+  const handleGenerate = async () => {
+    try {
+      const res = await api.post('/password/generate', { length: 16 });
+      setValue('password', res.data.password, { shouldValidate: true });
+    } catch (err) {
+      toast.error('Failed to generate password');
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -104,13 +116,30 @@ const VaultFormModal = ({ isOpen, onClose, vaultToEdit = null }) => {
           />
         </div>
 
-        <Input
-          label={vaultToEdit ? "New Password (leave blank to keep current)" : "Password *"}
-          type="password"
-          placeholder="••••••••"
-          {...register('password', { required: vaultToEdit ? false : 'Password is required' })}
-          error={errors.password?.message}
-        />
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {vaultToEdit ? "New Password (leave blank to keep current)" : "Password *"}
+            </label>
+            <button 
+              type="button" 
+              onClick={handleGenerate}
+              className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400"
+            >
+              Generate Strong Password
+            </button>
+          </div>
+          <input
+            type="text"
+            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all dark:text-white"
+            placeholder="••••••••"
+            {...register('password', { required: vaultToEdit ? false : 'Password is required' })}
+          />
+          {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
+          {(passwordValue || !vaultToEdit) && (
+            <PasswordStrengthMeter password={passwordValue} />
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>

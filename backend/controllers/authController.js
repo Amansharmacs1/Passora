@@ -2,6 +2,11 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../services/emailService.js';
+import { UAParser } from 'ua-parser-js';
+import Activity from '../models/Activity.js';
+import LoginHistory from '../models/LoginHistory.js';
+import Session from '../models/Session.js';
+import speakeasy from 'speakeasy';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -78,8 +83,46 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
+      // Check for 2FA
+      if (user.twoFactorEnabled) {
+        return res.json({
+          requires2FA: true,
+          userId: user._id
+        });
+      }
+
       const token = generateToken(res, user._id);
       
+      const parser = new UAParser(req.headers['user-agent']);
+      const result = parser.getResult();
+      const browser = result.browser.name ? `${result.browser.name} ${result.browser.version}` : 'Unknown';
+      const os = result.os.name ? `${result.os.name} ${result.os.version}` : 'Unknown';
+      const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
+      const deviceName = result.device.model || result.device.vendor || 'Unknown Device';
+
+      await LoginHistory.create({
+        userId: user._id,
+        browser,
+        os,
+        ipAddress,
+        loginTime: Date.now()
+      });
+
+      // Track Session
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const session = await Session.create({
+        userId: user._id,
+        tokenHash,
+        deviceInfo: { os, browser, ipAddress, deviceName },
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days matches JWT
+      });
+
+      await Activity.create({
+        userId: user._id,
+        action: 'Login',
+        details: `Logged in from ${os} using ${browser}`
+      });
+
       res.json({
         _id: user._id,
         fullName: user.fullName,
@@ -87,6 +130,7 @@ export const login = async (req, res, next) => {
         avatar: user.avatar,
         isVerified: user.isVerified,
         token,
+        sessionId: session._id
       });
     } else {
       res.status(401);
@@ -100,7 +144,25 @@ export const login = async (req, res, next) => {
 // @desc    Logout user / clear cookie or just success response for client to remove token
 // @route   POST /api/auth/logout
 // @access  Public
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
+  try {
+    if (req.user) {
+      // Find the most recent login without a logout time and update it
+      await LoginHistory.findOneAndUpdate(
+        { userId: req.user._id, logoutTime: null },
+        { logoutTime: Date.now() },
+        { sort: { loginTime: -1 } }
+      );
+
+      await Activity.create({
+        userId: req.user._id,
+        action: 'Logout',
+        details: 'User logged out manually or due to inactivity'
+      });
+    }
+  } catch (error) {
+    console.error('Error logging logout', error);
+  }
   // Since we are using Bearer tokens, the client handles deleting the token.
   res.status(200).json({ message: 'Logged out successfully' });
 };
@@ -227,6 +289,94 @@ export const verifyEmail = async (req, res, next) => {
     await user.save();
 
     res.status(200).json({ success: true, message: 'Email verified successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify 2FA for login
+// @route   POST /api/auth/login-2fa
+// @access  Public
+export const verifyLogin2FA = async (req, res, next) => {
+  try {
+    const { userId, token } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      return res.status(400).json({ message: '2FA not enabled for this user' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token
+    });
+
+    if (!verified) {
+      // Check if it's a recovery code instead
+      const RecoveryCode = (await import('../models/RecoveryCode.js')).default;
+      const codes = await RecoveryCode.find({ userId: user._id, used: false });
+      
+      let isRecoveryCodeValid = false;
+      for (const code of codes) {
+        const isMatch = await bcrypt.compare(token, code.codeHash);
+        if (isMatch) {
+          isRecoveryCodeValid = true;
+          code.used = true;
+          await code.save();
+          break;
+        }
+      }
+
+      if (!isRecoveryCodeValid) {
+        res.status(401);
+        throw new Error('Invalid OTP code or recovery code');
+      }
+    }
+
+    const jwtToken = generateToken(res, user._id);
+    
+    const parser = new UAParser(req.headers['user-agent']);
+    const result = parser.getResult();
+    const browser = result.browser.name ? `${result.browser.name} ${result.browser.version}` : 'Unknown';
+    const os = result.os.name ? `${result.os.name} ${result.os.version}` : 'Unknown';
+    const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
+    const deviceName = result.device.model || result.device.vendor || 'Unknown Device';
+
+    await LoginHistory.create({
+      userId: user._id,
+      browser,
+      os,
+      ipAddress,
+      loginTime: Date.now()
+    });
+
+    // Track Session
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(jwtToken).digest('hex');
+    const session = await Session.create({
+      userId: user._id,
+      tokenHash,
+      deviceInfo: { os, browser, ipAddress, deviceName },
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days matches JWT
+    });
+
+    await Activity.create({
+      userId: user._id,
+      action: 'Login 2FA',
+      details: `Logged in with 2FA from ${os} using ${browser}`
+    });
+
+    res.json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      avatar: user.avatar,
+      isVerified: user.isVerified,
+      token: jwtToken,
+      sessionId: session._id
+    });
   } catch (error) {
     next(error);
   }

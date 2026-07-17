@@ -1,5 +1,7 @@
 import Vault from '../models/Vault.js';
 import { encrypt, decrypt } from '../utils/encryption.js';
+import Activity from '../models/Activity.js';
+import PasswordHistory from '../models/PasswordHistory.js';
 
 // @desc    Get all vault items for a user (excluding passwords)
 // @route   GET /api/vault
@@ -116,6 +118,13 @@ export const createVault = async (req, res, next) => {
 
     const createdVault = await vault.save();
     
+    await Activity.create({
+      userId: req.user._id,
+      action: 'Added',
+      vaultId: createdVault._id,
+      details: `Added password for ${title}`
+    });
+
     // Send back without sensitive info
     const vaultObj = createdVault.toObject();
     delete vaultObj.encryptedPassword;
@@ -163,6 +172,17 @@ export const updateVault = async (req, res, next) => {
     vault.tags = tags || vault.tags;
 
     if (password) {
+      // Store old password in history
+      if (vault.encryptedPassword) {
+        await PasswordHistory.create({
+          vaultId: vault._id,
+          userId: req.user._id,
+          encryptedPassword: vault.encryptedPassword,
+          iv: vault.iv,
+          authTag: vault.authTag,
+        });
+      }
+
       const { encryptedData, iv, authTag } = encrypt(password);
       vault.encryptedPassword = encryptedData;
       vault.iv = iv;
@@ -170,6 +190,13 @@ export const updateVault = async (req, res, next) => {
     }
 
     const updatedVault = await vault.save();
+    
+    await Activity.create({
+      userId: req.user._id,
+      action: 'Edited',
+      vaultId: updatedVault._id,
+      details: `Edited password for ${updatedVault.title}`
+    });
     
     const vaultObj = updatedVault.toObject();
     delete vaultObj.encryptedPassword;
@@ -196,6 +223,13 @@ export const deleteVault = async (req, res, next) => {
 
     vault.deleted = true;
     await vault.save();
+
+    await Activity.create({
+      userId: req.user._id,
+      action: 'Deleted',
+      vaultId: vault._id,
+      details: `Moved ${vault.title} to trash`
+    });
 
     res.json({ message: 'Moved to trash' });
   } catch (error) {

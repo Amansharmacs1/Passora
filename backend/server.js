@@ -10,6 +10,14 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import vaultRoutes from './routes/vaultRoutes.js';
 import folderRoutes from './routes/folderRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import passwordRoutes from './routes/passwordRoutes.js';
+import securityRoutes from './routes/securityRoutes.js';
+import masterPasswordRoutes from './routes/masterPasswordRoutes.js';
+import twoFactorRoutes from './routes/twoFactorRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js';
+import shareRoutes from './routes/shareRoutes.js';
+import importExportRoutes from './routes/importExportRoutes.js';
 
 dotenv.config();
 
@@ -39,6 +47,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/password', passwordRoutes);
+app.use('/api/security', securityRoutes);
+app.use('/api/master', masterPasswordRoutes);
+app.use('/api/2fa', twoFactorRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/share', shareRoutes);
+app.use('/api', importExportRoutes);
 
 app.get('/', (req, res) => {
   res.send('Passora API is running...');
