@@ -16,14 +16,14 @@ const Login = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
+  const [show2FA, setShow2FA] = useState(false);
+  const [tempUserId, setTempUserId] = useState(null);
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+
   // Redirect if already logged in
   if (user) {
     return <Navigate to={from} replace />;
   }
-
-  const [show2FA, setShow2FA] = useState(false);
-  const [tempUserId, setTempUserId] = useState(null);
-  const [twoFactorToken, setTwoFactorToken] = useState('');
 
   const onSubmit = async (data) => {
     try {

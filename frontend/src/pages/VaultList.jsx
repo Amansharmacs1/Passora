@@ -7,8 +7,7 @@ import VaultFormModal from '../components/VaultFormModal';
 import VaultDetailsModal from '../components/VaultDetailsModal';
 import FolderFormModal from '../components/FolderFormModal';
 import Button from '../components/Button';
-import Input from '../components/Input';
-import { FaPlus, FaSearch, FaFilter, FaSort, FaShieldAlt } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSort, FaShieldAlt } from 'react-icons/fa';
 import vaultService from '../services/vaultService';
 import folderService from '../services/folderService';
 import toast from 'react-hot-toast';
@@ -126,7 +125,8 @@ const VaultList = () => {
                 await folderService.deleteFolder(id);
                 toast.success('Folder deleted');
                 refreshVaultData();
-            } catch(e) {
+            } catch(error) {
+                console.error('Failed to delete folder:', error);
                 toast.error('Failed to delete folder');
             }
         }

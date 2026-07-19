@@ -42,6 +42,7 @@ const TwoFactorSetup = ({ isOpen, onClose, onSuccess }) => {
       setRecoveryCodes(data.recoveryCodes);
       setStep(3);
     } catch (error) {
+      console.error('Invalid OTP:', error);
       toast.error('Invalid OTP code. Please try again.');
     } finally {
       setLoading(false);

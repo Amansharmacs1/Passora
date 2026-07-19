@@ -22,6 +22,7 @@ const ShareModal = ({ isOpen, onClose, vault }) => {
       setShareLink(link);
       toast.success('Share link generated!');
     } catch (error) {
+      console.error('Failed to generate share link:', error);
       toast.error('Failed to generate share link');
     } finally {
       setLoading(false);

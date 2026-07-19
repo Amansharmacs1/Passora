@@ -13,6 +13,7 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${user.token}`;
       }
     } catch (e) {
+      console.error('Failed to parse passora_user from local storage:', e);
       localStorage.removeItem('passora_user');
     }
     return config;

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -10,6 +11,7 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('passora_user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (e) {
+      console.error('Failed to parse user from local storage:', e);
       localStorage.removeItem('passora_user');
       return null;
     }

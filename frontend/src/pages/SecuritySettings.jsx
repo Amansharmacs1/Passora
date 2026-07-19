@@ -14,7 +14,7 @@ const SecuritySettings = () => {
   const [masterAction, setMasterAction] = useState(''); // 'setup' | 'change' | 'remove'
   const [masterPasswordInput, setMasterPasswordInput] = useState('');
   
-  const { setupMasterPassword, removeMasterPassword, disable2FA, passkeys, fetchPasskeys, registerPasskey, deletePasskey } = useSecurity();
+  const { setupMasterPassword, disable2FA, passkeys, fetchPasskeys, registerPasskey, deletePasskey } = useSecurity();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false); // In a real app, this should come from user profile API
 
   useEffect(() => {
@@ -38,6 +38,7 @@ const SecuritySettings = () => {
         toast.success('Passkey deleted');
         fetchPasskeys();
       } catch (error) {
+        console.error('Failed to delete passkey:', error);
         toast.error('Failed to delete passkey');
       }
     }
@@ -61,6 +62,7 @@ const SecuritySettings = () => {
       toast.success('2FA Disabled');
       setIs2FAEnabled(false);
     } catch (e) {
+      console.error('Failed to disable 2FA:', e);
       toast.error('Failed to disable 2FA');
     }
   };

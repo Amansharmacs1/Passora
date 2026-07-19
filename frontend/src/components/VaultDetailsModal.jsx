@@ -49,6 +49,7 @@ const VaultDetailsModal = ({ isOpen, onClose, vault }) => {
         setDecryptedPassword(data.password);
         setShowPassword(true);
       } catch (error) {
+        console.error('Failed to decrypt password:', error);
         toast.error('Failed to decrypt password');
       } finally {
         setLoading(false);
@@ -70,6 +71,7 @@ const VaultDetailsModal = ({ isOpen, onClose, vault }) => {
             copyToClipboard(data.customData?.keyValue, 'API Key');
         }
       } catch (error) {
+        console.error('Failed to decrypt password:', error);
         toast.error('Failed to decrypt password');
       } finally {
         setLoading(false);

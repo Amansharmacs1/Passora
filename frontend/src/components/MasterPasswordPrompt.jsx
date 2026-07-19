@@ -23,6 +23,7 @@ const MasterPasswordPrompt = ({ isOpen, onClose, onSuccess, actionText = 'contin
       setPassword('');
       onSuccess();
     } catch (error) {
+      console.error('Invalid master password:', error);
       toast.error('Invalid master password');
     } finally {
       setLoading(false);

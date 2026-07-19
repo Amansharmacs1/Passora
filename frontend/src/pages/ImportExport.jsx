@@ -38,6 +38,7 @@ const ImportExport = () => {
 
       toast.success(`Vault exported as ${format.toUpperCase()}`);
     } catch (error) {
+      console.error('Export failed:', error);
       toast.error('Export failed. Check your Master Password.');
     } finally {
       setExporting(false);

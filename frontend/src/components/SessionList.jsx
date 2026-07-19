@@ -19,6 +19,7 @@ const SessionList = () => {
       toast.success('Session revoked successfully');
       fetchSessions();
     } catch (error) {
+      console.error('Failed to revoke session:', error);
       toast.error('Failed to revoke session');
     } finally {
       setLoadingId(null);
@@ -36,6 +37,7 @@ const SessionList = () => {
       toast.success('All other sessions revoked');
       fetchSessions();
     } catch (error) {
+      console.error('Failed to revoke sessions:', error);
       toast.error('Failed to revoke sessions');
     }
   };

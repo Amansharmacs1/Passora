@@ -15,7 +15,7 @@ import {
     FaFileExport
 } from 'react-icons/fa';
 import { VaultContext } from '../context/VaultContext';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { NavLink } from 'react-router-dom';
 
 const Sidebar = ({ onOpenFolderModal, onEditFolder, onDeleteFolder }) => {

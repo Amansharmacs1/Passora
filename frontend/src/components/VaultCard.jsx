@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaGlobe, FaCopy, FaEllipsisV, FaRegStar, FaStar, FaStickyNote, FaCreditCard, FaIdCard, FaKey } from 'react-icons/fa';
+import { FaGlobe, FaEllipsisV, FaRegStar, FaStar, FaStickyNote, FaCreditCard, FaIdCard, FaKey } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const VaultCard = ({ vault, onClick, onAction }) => {

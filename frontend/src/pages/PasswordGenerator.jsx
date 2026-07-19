@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSecurity } from '../context/SecurityContext';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
-import Button from '../components/Button';
-import { FaCopy, FaSyncAlt, FaSave } from 'react-icons/fa';
+import { FaCopy, FaSyncAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -26,7 +25,8 @@ const PasswordGenerator = () => {
       });
       setPassword(res.data.password);
       addGeneratedPassword(res.data.password);
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to generate password:', error);
       toast.error('Failed to generate password');
     }
   }, [length, options, addGeneratedPassword]);

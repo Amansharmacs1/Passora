@@ -49,7 +49,8 @@ const VaultFormModal = ({ isOpen, onClose, vaultToEdit = null }) => {
     try {
       const res = await api.post('/password/generate', { length: 16 });
       setValue('password', res.data.password, { shouldValidate: true });
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to generate password:', error);
       toast.error('Failed to generate password');
     }
   };

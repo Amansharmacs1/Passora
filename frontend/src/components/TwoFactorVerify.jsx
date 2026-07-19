@@ -19,6 +19,7 @@ const TwoFactorVerify = ({ isOpen, userId, onSuccess, onCancel }) => {
       await verify2FA(userId, token);
       onSuccess();
     } catch (error) {
+      console.error('Invalid 2FA code:', error);
       toast.error('Invalid code. Please try again.');
     } finally {
       setLoading(false);

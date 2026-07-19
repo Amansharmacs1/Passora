@@ -6,7 +6,7 @@ import { FaShieldAlt, FaStar, FaExclamationTriangle, FaCopy, FaCheckCircle, FaCh
 import { Link } from 'react-router-dom';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, 
+  XAxis, YAxis, CartesianGrid, Legend, 
   LineChart, Line 
 } from 'recharts';
 import Button from '../components/Button';
@@ -54,6 +54,7 @@ const Dashboard = () => {
         toast.success('No breached passwords found. You are safe!');
       }
     } catch (error) {
+      console.error('Failed to scan for breaches:', error);
       toast.error('Failed to scan for breaches');
     } finally {
       setIsScanning(false);

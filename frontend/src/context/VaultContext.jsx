@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect } from 'react';
 import vaultService from '../services/vaultService';
 import folderService from '../services/folderService';
 import { useAuth } from './AuthContext';
