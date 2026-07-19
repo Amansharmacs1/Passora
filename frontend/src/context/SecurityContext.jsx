@@ -141,6 +141,47 @@ export const SecurityProvider = ({ children }) => {
     return res.data;
   };
 
+  // Passkeys
+  const [passkeys, setPasskeys] = useState([]);
+  const fetchPasskeys = useCallback(async () => {
+    try {
+      const res = await api.get('/webauthn/passkeys');
+      setPasskeys(res.data);
+    } catch (error) {
+      console.error('Failed to fetch passkeys', error);
+    }
+  }, []);
+  
+  const registerPasskey = async () => {
+    const { startRegistration } = await import('@simplewebauthn/browser');
+    
+    // 1. Get options
+    const optRes = await api.get('/webauthn/register/generate-options');
+    const options = optRes.data;
+
+    // 2. Prompt user
+    const regResp = await startRegistration(options);
+
+    // 3. Verify
+    const verifyRes = await api.post('/webauthn/register/verify', {
+      body: regResp,
+      deviceName: window.navigator.userAgent // simplistic device naming
+    });
+
+    return verifyRes.data;
+  };
+
+  const deletePasskey = async (id) => {
+    const res = await api.delete(`/webauthn/passkeys/${id}`);
+    return res.data;
+  };
+
+  // Breaches
+  const scanBreaches = async () => {
+    const res = await api.post('/breach/scan-vault');
+    return res.data;
+  };
+
   return (
     <SecurityContext.Provider value={{
       securityReport,
@@ -169,7 +210,12 @@ export const SecurityProvider = ({ children }) => {
       revokeAllSessions,
       createShare,
       getShareHistory,
-      revokeShare
+      revokeShare,
+      passkeys,
+      fetchPasskeys,
+      registerPasskey,
+      deletePasskey,
+      scanBreaches
     }}>
       {children}
     </SecurityContext.Provider>

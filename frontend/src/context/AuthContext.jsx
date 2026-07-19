@@ -53,6 +53,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithPasskey = async (email) => {
+    setLoading(true);
+    try {
+      // 1. Get options from server
+      const { startAuthentication } = await import('@simplewebauthn/browser');
+      const optRes = await api.post('/webauthn/auth/generate-options', { email });
+      const options = optRes.data;
+
+      // 2. Prompt user to authenticate
+      const authResp = await startAuthentication(options);
+
+      // 3. Verify response with server
+      const verifyRes = await api.post('/webauthn/auth/verify', {
+        email,
+        body: authResp
+      });
+      
+      setUser(verifyRes.data);
+      localStorage.setItem('passora_user', JSON.stringify(verifyRes.data));
+      return verifyRes.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const register = async (fullName, email, password) => {
     setLoading(true);
     try {
@@ -118,7 +143,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, verify2FA, register, logout, updateProfile, loading }}>
+    <AuthContext.Provider value={{ user, login, loginWithPasskey, verify2FA, register, logout, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

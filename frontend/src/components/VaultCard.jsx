@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaGlobe, FaCopy, FaEllipsisV, FaRegStar, FaStar } from 'react-icons/fa';
-import { useState } from 'react';
+import { FaGlobe, FaCopy, FaEllipsisV, FaRegStar, FaStar, FaStickyNote, FaCreditCard, FaIdCard, FaKey } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const VaultCard = ({ vault, onClick, onAction }) => {
@@ -31,7 +31,15 @@ const VaultCard = ({ vault, onClick, onAction }) => {
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-            {vault.favicon ? (
+            {vault.itemType === 'secure_note' ? (
+                <FaStickyNote className="text-yellow-500 text-xl" />
+            ) : vault.itemType === 'credit_card' ? (
+                <FaCreditCard className="text-blue-500 text-xl" />
+            ) : vault.itemType === 'identity' ? (
+                <FaIdCard className="text-green-500 text-xl" />
+            ) : vault.itemType === 'api_key' ? (
+                <FaKey className="text-purple-500 text-xl" />
+            ) : vault.favicon ? (
               <img src={vault.favicon} alt={`${vault.title} icon`} className="w-8 h-8 object-contain" />
             ) : (
               <FaGlobe className="text-gray-400 text-xl" />
@@ -41,8 +49,8 @@ const VaultCard = ({ vault, onClick, onAction }) => {
             <h3 className="font-semibold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-[180px]">
               {vault.title}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-[180px]">
-              {vault.username || vault.email || 'No username'}
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-[180px] capitalize">
+              {vault.itemType === 'login' || !vault.itemType ? (vault.username || vault.email || 'No username') : vault.itemType.replace('_', ' ')}
             </p>
           </div>
         </div>
@@ -75,8 +83,12 @@ const VaultCard = ({ vault, onClick, onAction }) => {
           
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-10 py-2">
-              <button onClick={(e) => copyToClipboard(e, vault.username, 'Username')} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Copy Username</button>
-              <button onClick={(e) => handleAction(e, 'copyPassword')} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Copy Password</button>
+              {(!vault.itemType || vault.itemType === 'login') && (
+                  <button onClick={(e) => copyToClipboard(e, vault.username, 'Username')} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Copy Username</button>
+              )}
+              <button onClick={(e) => handleAction(e, 'copySecret')} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  {(!vault.itemType || vault.itemType === 'login') ? 'Copy Password' : 'Copy Secret'}
+              </button>
               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
               <button onClick={(e) => handleAction(e, 'edit')} className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">Edit</button>
               {vault.deleted ? (
@@ -100,4 +112,4 @@ const VaultCard = ({ vault, onClick, onAction }) => {
   );
 };
 
-export default VaultCard;
+export default React.memo(VaultCard);

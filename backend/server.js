@@ -18,6 +18,8 @@ import twoFactorRoutes from './routes/twoFactorRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 import shareRoutes from './routes/shareRoutes.js';
 import importExportRoutes from './routes/importExportRoutes.js';
+import webauthnRoutes from './routes/webauthnRoutes.js';
+import breachRoutes from './routes/breachRoutes.js';
 
 dotenv.config();
 
@@ -54,6 +56,8 @@ app.use('/api/master', masterPasswordRoutes);
 app.use('/api/2fa', twoFactorRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/webauthn', webauthnRoutes);
+app.use('/api/breach', breachRoutes);
 app.use('/api', importExportRoutes);
 
 app.get('/', (req, res) => {
@@ -66,6 +70,10 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app;

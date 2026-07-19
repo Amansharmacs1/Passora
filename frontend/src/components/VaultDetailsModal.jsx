@@ -53,12 +53,22 @@ const VaultDetailsModal = ({ isOpen, onClose, vault }) => {
       } finally {
         setLoading(false);
       }
-    } else if (pendingAction === 'copy') {
+      } else if (pendingAction === 'copy') {
       try {
         setLoading(true);
         const data = await vaultService.getVaultById(vault._id);
         setDecryptedPassword(data.password);
-        copyToClipboard(data.password, 'Password');
+        if (data.itemType === 'login') {
+            copyToClipboard(data.password, 'Password');
+        } else if (data.itemType === 'secure_note') {
+            copyToClipboard(data.customData?.content, 'Note Content');
+        } else if (data.itemType === 'credit_card') {
+            copyToClipboard(data.customData?.cardNumber, 'Card Number');
+        } else if (data.itemType === 'identity') {
+            copyToClipboard(data.customData?.docNumber, 'Document Number');
+        } else if (data.itemType === 'api_key') {
+            copyToClipboard(data.customData?.keyValue, 'API Key');
+        }
       } catch (error) {
         toast.error('Failed to decrypt password');
       } finally {
@@ -140,8 +150,10 @@ const VaultDetailsModal = ({ isOpen, onClose, vault }) => {
           <div className="space-y-4">
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl space-y-4">
                   
-                  {/* Username */}
-                  <div className="flex justify-between items-center">
+                  {vault.itemType === 'login' && (
+                    <>
+                      {/* Username */}
+                      <div className="flex justify-between items-center">
                       <div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Username</p>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.username || '—'}</p>
@@ -187,6 +199,99 @@ const VaultDetailsModal = ({ isOpen, onClose, vault }) => {
                           </button>
                       </div>
                   </div>
+                </>
+              )}
+                  {vault.itemType === 'secure_note' && (
+                    <div className="space-y-2">
+                       <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Secure Note</p>
+                       <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-pre-wrap blur-sm hover:blur-none transition-all cursor-pointer">
+                           Hover to reveal note content
+                       </p>
+                    </div>
+                  )}
+
+                  {vault.itemType === 'credit_card' && vault.customData && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Cardholder</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.cardHolder || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Bank</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.bank || '—'}</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Card Number</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white font-mono tracking-wider">
+                                  {showPassword ? vault.customData.cardNumber : '•••• •••• •••• ••••'}
+                              </p>
+                          </div>
+                          <div className="flex space-x-1">
+                              <button onClick={handleRevealPassword} disabled={loading} className="text-gray-400 hover:text-primary-600 p-2">
+                                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                              </button>
+                              <button onClick={handleCopyPassword} disabled={loading} className="text-gray-400 hover:text-primary-600 p-2">
+                                  <FaCopy />
+                              </button>
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Expires</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.expiry || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CVV</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{showPassword ? vault.customData.cvv : '•••'}</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {vault.itemType === 'identity' && vault.customData && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{vault.customData.docType || 'Document Type'}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.docNumber || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Full Name</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.fullName || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Date Info</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.dateInfo || '—'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {vault.itemType === 'api_key' && vault.customData && (
+                     <>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Key Name</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{vault.customData.keyName || '—'}</p>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Key Value</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white font-mono tracking-wider">
+                                  {showPassword ? vault.customData.keyValue : '••••••••••••••••'}
+                              </p>
+                          </div>
+                          <div className="flex space-x-1">
+                              <button onClick={handleRevealPassword} disabled={loading} className="text-gray-400 hover:text-primary-600 p-2">
+                                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                              </button>
+                              <button onClick={handleCopyPassword} disabled={loading} className="text-gray-400 hover:text-primary-600 p-2">
+                                  <FaCopy />
+                              </button>
+                          </div>
+                      </div>
+                     </>
+                  )}
 
               </div>
 

@@ -24,6 +24,12 @@ const vaultSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    itemType: {
+      type: String,
+      enum: ['login', 'secure_note', 'credit_card', 'identity', 'api_key'],
+      default: 'login',
+    },
+    // Legacy fields (specifically for 'login' itemType, can be phased out or kept for backwards compatibility)
     username: {
       type: String,
       trim: true,
@@ -34,8 +40,16 @@ const vaultSchema = new mongoose.Schema(
     },
     encryptedPassword: {
       type: String,
-      required: true,
+      required: false, // Make optional because notes/cards don't have this
     },
+    
+    // New Generic Payload Field for JSON stringified custom data (e.g. CVV, Card Number, Note content)
+    encryptedData: {
+      type: String,
+      required: false,
+    },
+
+    // Encryption Metadata (applies to encryptedPassword AND encryptedData)
     iv: {
       type: String,
       required: true,

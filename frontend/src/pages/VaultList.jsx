@@ -95,10 +95,24 @@ const VaultList = () => {
                     await vaultService.favoriteVault(vault._id);
                     refreshVaultData();
                     break;
-                case 'copyPassword':
+                case 'copySecret':
                     const data = await vaultService.getVaultById(vault._id);
-                    navigator.clipboard.writeText(data.password);
-                    toast.success('Password copied');
+                    if (data.itemType === 'login' || !data.itemType) {
+                        navigator.clipboard.writeText(data.password);
+                        toast.success('Password copied');
+                    } else if (data.itemType === 'secure_note') {
+                        navigator.clipboard.writeText(data.customData?.content || '');
+                        toast.success('Note copied');
+                    } else if (data.itemType === 'credit_card') {
+                        navigator.clipboard.writeText(data.customData?.cardNumber || '');
+                        toast.success('Card number copied');
+                    } else if (data.itemType === 'identity') {
+                        navigator.clipboard.writeText(data.customData?.docNumber || '');
+                        toast.success('Document number copied');
+                    } else if (data.itemType === 'api_key') {
+                        navigator.clipboard.writeText(data.customData?.keyValue || '');
+                        toast.success('API Key copied');
+                    }
                     break;
             }
         } catch (error) {

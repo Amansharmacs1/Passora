@@ -9,7 +9,7 @@ const activitySchema = new mongoose.Schema(
     },
     action: {
       type: String,
-      enum: ['Added', 'Edited', 'Deleted', 'Viewed', 'Copied', 'Login', 'Logout', 'Generated', 'Restored', 'Archived', 'Favorite'],
+      enum: ['Added', 'Edited', 'Deleted', 'Viewed', 'Copied', 'Login', 'Login 2FA', 'Logout', 'Generated', 'Restored', 'Archived', 'Favorite', 'Master Password Set', 'Master Password Changed', 'Master Password Removed'],
       required: true,
     },
     vaultId: {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import SessionList from '../components/SessionList';
 import Button from '../components/Button';
@@ -6,6 +6,7 @@ import TwoFactorSetup from '../components/TwoFactorSetup';
 import MasterPasswordPrompt from '../components/MasterPasswordPrompt';
 import toast from 'react-hot-toast';
 import { useSecurity } from '../context/SecurityContext';
+import { FaKey, FaTrash } from 'react-icons/fa';
 
 const SecuritySettings = () => {
   const [is2FASetupOpen, setIs2FASetupOpen] = useState(false);
@@ -13,8 +14,34 @@ const SecuritySettings = () => {
   const [masterAction, setMasterAction] = useState(''); // 'setup' | 'change' | 'remove'
   const [masterPasswordInput, setMasterPasswordInput] = useState('');
   
-  const { setupMasterPassword, removeMasterPassword, disable2FA } = useSecurity();
+  const { setupMasterPassword, removeMasterPassword, disable2FA, passkeys, fetchPasskeys, registerPasskey, deletePasskey } = useSecurity();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false); // In a real app, this should come from user profile API
+
+  useEffect(() => {
+    fetchPasskeys();
+  }, [fetchPasskeys]);
+
+  const handleRegisterPasskey = async () => {
+    try {
+      await registerPasskey();
+      toast.success('Passkey registered successfully');
+      fetchPasskeys();
+    } catch (error) {
+      toast.error(error.message || 'Failed to register passkey');
+    }
+  };
+
+  const handleDeletePasskey = async (id) => {
+    if (window.confirm('Are you sure you want to delete this passkey?')) {
+      try {
+        await deletePasskey(id);
+        toast.success('Passkey deleted');
+        fetchPasskeys();
+      } catch (error) {
+        toast.error('Failed to delete passkey');
+      }
+    }
+  };
 
   const handleMasterSuccess = () => {
     setIsMasterPromptOpen(false);
@@ -105,6 +132,48 @@ const SecuritySettings = () => {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Passkeys Panel */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Passkeys (WebAuthn)</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Log in securely using your device's biometrics (Touch ID, Face ID) or security keys.
+                </p>
+              </div>
+              <Button onClick={handleRegisterPasskey}>Register Passkey</Button>
+            </div>
+            
+            {passkeys.length > 0 ? (
+              <div className="space-y-3">
+                {passkeys.map(pk => (
+                  <div key={pk._id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-full flex items-center justify-center">
+                        <FaKey />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{pk.deviceName}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Added: {new Date(pk.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDeletePasskey(pk._id)}
+                      className="text-red-500 hover:text-red-600 p-2"
+                      title="Delete Passkey"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                No passkeys registered yet.
+              </div>
+            )}
           </div>
 
           {/* Sessions Panel */}

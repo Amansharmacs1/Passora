@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
@@ -10,9 +10,14 @@ import Button from '../components/Button';
 
 const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
-  const { register: registerUser, loading } = useAuth();
+  const { register: registerUser, loading, user } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect if already logged in
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const password = watch('password', '');
 

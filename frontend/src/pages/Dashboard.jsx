@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { VaultContext } from '../context/VaultContext';
 import { useSecurity } from '../context/SecurityContext';
 import { motion } from 'framer-motion';
@@ -9,6 +9,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, 
   LineChart, Line 
 } from 'recharts';
+import Button from '../components/Button';
+import toast from 'react-hot-toast';
 
 const StatCard = ({ title, value, icon: Icon, color, link }) => (
   <Link to={link}>
@@ -33,8 +35,30 @@ const Dashboard = () => {
     securityReport, 
     scoreTrend, 
     fetchSecurityReport, 
-    fetchScoreTrend 
+    fetchScoreTrend,
+    scanBreaches
   } = useSecurity();
+
+  const [isScanning, setIsScanning] = useState(false);
+  const [breachResult, setBreachResult] = useState(null);
+
+  const handleScanBreaches = async () => {
+    setIsScanning(true);
+    setBreachResult(null);
+    try {
+      const result = await scanBreaches();
+      setBreachResult(result);
+      if (result.breachedCount > 0) {
+        toast.error(`Found ${result.breachedCount} breached passwords!`);
+      } else {
+        toast.success('No breached passwords found. You are safe!');
+      }
+    } catch (error) {
+      toast.error('Failed to scan for breaches');
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   useEffect(() => {
     fetchSecurityReport();
@@ -79,9 +103,20 @@ const Dashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Security Dashboard</h1>
-        <p className="text-gray-500 dark:text-gray-400">Overview of your vault health and password security.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Security Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400">Overview of your vault health and password security.</p>
+        </div>
+        <Button onClick={handleScanBreaches} isLoading={isScanning} className="hidden sm:flex">
+            Scan for Breaches (HIBP)
+        </Button>
+      </div>
+      
+      <div className="sm:hidden">
+         <Button onClick={handleScanBreaches} isLoading={isScanning} className="w-full">
+            Scan for Breaches (HIBP)
+         </Button>
       </div>
 
       {/* Primary Score & Stats Grid */}
@@ -160,6 +195,47 @@ const Dashboard = () => {
         </div>
 
       </div>
+
+      {/* Breach Results */}
+      {breachResult && (
+        <div className={`rounded-2xl shadow-sm border p-6 ${breachResult.breachedCount > 0 ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-900/50' : 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900/50'}`}>
+          <div className="flex items-start space-x-4">
+            <div className={`p-3 rounded-xl ${breachResult.breachedCount > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+              <FaShieldAlt size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-lg font-bold ${breachResult.breachedCount > 0 ? 'text-red-900 dark:text-red-400' : 'text-green-900 dark:text-green-400'}`}>
+                {breachResult.breachedCount > 0 ? 'Breached Passwords Found' : 'No Breaches Found'}
+              </h3>
+              <p className={`text-sm mt-1 ${breachResult.breachedCount > 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>
+                {breachResult.breachedCount > 0 
+                  ? `We found ${breachResult.breachedCount} of your passwords in known data breaches (via Have I Been Pwned). You should change these immediately.` 
+                  : 'Great news! None of your passwords appear in any known data breaches.'}
+              </p>
+              
+              {breachResult.breachedCount > 0 && (
+                <div className="mt-4 bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-red-100 dark:border-red-900/30">
+                  <ul className="divide-y divide-red-100 dark:divide-red-900/30">
+                    {breachResult.breachedVaults.map(b => (
+                      <li key={b.vaultId} className="p-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white">{b.title}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{b.username}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-semibold px-2 py-1 bg-red-100 text-red-600 rounded-full">
+                            Seen {b.count.toLocaleString()} times
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

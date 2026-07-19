@@ -55,11 +55,23 @@ export const getVaultById = async (req, res, next) => {
 
     // Attempt to decrypt
     try {
-      const decryptedPassword = decrypt(vault.encryptedPassword, vault.iv, vault.authTag);
-      
       const vaultObj = vault.toObject();
-      vaultObj.password = decryptedPassword;
+      
+      if (vault.encryptedPassword) {
+        vaultObj.password = decrypt(vault.encryptedPassword, vault.iv, vault.authTag);
+      }
+      
+      if (vault.encryptedData) {
+        const decryptedStr = decrypt(vault.encryptedData, vault.iv, vault.authTag);
+        try {
+          vaultObj.customData = JSON.parse(decryptedStr);
+        } catch (e) {
+          vaultObj.customData = decryptedStr; // fallback if it's not valid JSON
+        }
+      }
+
       delete vaultObj.encryptedPassword;
+      delete vaultObj.encryptedData;
       delete vaultObj.iv;
       delete vaultObj.authTag;
 
@@ -78,14 +90,35 @@ export const getVaultById = async (req, res, next) => {
 // @access  Private
 export const createVault = async (req, res, next) => {
   try {
-    const { title, website, websiteURL, username, email, password, notes, category, folder, tags, favorite } = req.body;
+    const { title, website, websiteURL, username, email, password, notes, category, folder, tags, favorite, itemType, customData } = req.body;
 
-    if (!title || !password) {
+    if (!title) {
       res.status(400);
-      throw new Error('Title and password are required');
+      throw new Error('Title is required');
     }
 
-    const { encryptedData, iv, authTag } = encrypt(password);
+    let encPayload = null;
+    let encPayloadData = null;
+    let encIv = '';
+    let encAuthTag = '';
+
+    if (password) {
+      const { encryptedData, iv, authTag } = encrypt(password);
+      encPayload = encryptedData;
+      encIv = iv;
+      encAuthTag = authTag;
+    } else if (customData) {
+      const { encryptedData, iv, authTag } = encrypt(JSON.stringify(customData));
+      encPayloadData = encryptedData;
+      encIv = iv;
+      encAuthTag = authTag;
+    } else {
+      // For empty secrets, just encrypt a blank string so we have valid iv/authTag
+      const { encryptedData, iv, authTag } = encrypt('');
+      encPayload = encryptedData;
+      encIv = iv;
+      encAuthTag = authTag;
+    }
 
     // simple logic to auto-generate favicon if URL is present and favicon is empty
     let faviconUrl = '';
@@ -100,15 +133,17 @@ export const createVault = async (req, res, next) => {
 
     const vault = new Vault({
       userId: req.user._id,
+      itemType: itemType || 'login',
       title,
       website,
       websiteURL,
       favicon: faviconUrl,
       username,
       email,
-      encryptedPassword: encryptedData,
-      iv,
-      authTag,
+      encryptedPassword: encPayload,
+      encryptedData: encPayloadData,
+      iv: encIv,
+      authTag: encAuthTag,
       notes,
       category,
       folder: folder || null,
@@ -128,6 +163,7 @@ export const createVault = async (req, res, next) => {
     // Send back without sensitive info
     const vaultObj = createdVault.toObject();
     delete vaultObj.encryptedPassword;
+    delete vaultObj.encryptedData;
     delete vaultObj.iv;
     delete vaultObj.authTag;
 
@@ -142,7 +178,7 @@ export const createVault = async (req, res, next) => {
 // @access  Private
 export const updateVault = async (req, res, next) => {
   try {
-    const { title, website, websiteURL, username, email, password, notes, category, folder, tags } = req.body;
+    const { title, website, websiteURL, username, email, password, notes, category, folder, tags, customData } = req.body;
 
     const vault = await Vault.findOne({ _id: req.params.id, userId: req.user._id });
 
@@ -187,6 +223,11 @@ export const updateVault = async (req, res, next) => {
       vault.encryptedPassword = encryptedData;
       vault.iv = iv;
       vault.authTag = authTag;
+    } else if (customData) {
+       const { encryptedData, iv, authTag } = encrypt(JSON.stringify(customData));
+       vault.encryptedData = encryptedData;
+       vault.iv = iv;
+       vault.authTag = authTag;
     }
 
     const updatedVault = await vault.save();
@@ -200,6 +241,7 @@ export const updateVault = async (req, res, next) => {
     
     const vaultObj = updatedVault.toObject();
     delete vaultObj.encryptedPassword;
+    delete vaultObj.encryptedData;
     delete vaultObj.iv;
     delete vaultObj.authTag;
 
