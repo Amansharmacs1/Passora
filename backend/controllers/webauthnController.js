@@ -81,8 +81,7 @@ export const generateRegOptions = async (req, res) => {
 // @access  Private
 export const verifyRegResponse = async (req, res) => {
   try {
-    const { body } = req;
-    const { deviceName } = req.body; // Custom property sent by client
+    const { body: clientResponse, deviceName } = req.body;
     const user = await User.findById(req.user._id);
 
     const expectedChallenge = challengesStore[user._id.toString()];
@@ -93,7 +92,7 @@ export const verifyRegResponse = async (req, res) => {
 
     const { rpID, origin } = getDynamicOriginAndRPID(req);
     const verification = await verifyRegistrationResponse({
-      response: body,
+      response: clientResponse,
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
@@ -108,7 +107,7 @@ export const verifyRegResponse = async (req, res) => {
         credentialID: Buffer.from(credentialID).toString('base64url'),
         credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
         counter,
-        transports: body.response.transports || [],
+        transports: clientResponse.response.transports || [],
         deviceName: deviceName || 'New Device',
       });
 
