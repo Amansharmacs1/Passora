@@ -59,7 +59,8 @@ export const verify2FASetup = async (req, res) => {
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
-      token
+      token,
+      window: 1
     });
 
     if (!verified) {
@@ -92,7 +93,7 @@ export const verify2FASetup = async (req, res) => {
     });
 
     await sendEmail({
-      to: user.email,
+      email: user.email,
       subject: '2FA Enabled - Passora',
       html: `
         <h2>Two-Factor Authentication Enabled</h2>
@@ -132,7 +133,8 @@ export const disable2FA = async (req, res) => {
       const verified = speakeasy.totp.verify({
         secret: user.twoFactorSecret,
         encoding: 'base32',
-        token
+        token,
+        window: 1
       });
 
       if (!verified) {
@@ -153,7 +155,7 @@ export const disable2FA = async (req, res) => {
     });
 
     await sendEmail({
-      to: user.email,
+      email: user.email,
       subject: '2FA Disabled - Passora',
       html: `
         <h2>Two-Factor Authentication Disabled</h2>

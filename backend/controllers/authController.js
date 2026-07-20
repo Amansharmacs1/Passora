@@ -393,7 +393,8 @@ export const verifyLogin2FA = async (req, res, next) => {
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
-      token
+      token,
+      window: 1
     });
 
     if (!verified) {
