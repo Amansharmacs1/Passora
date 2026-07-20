@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { FaFingerprint } from 'react-icons/fa';
+import { FaFingerprint, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -17,6 +17,7 @@ const Login = () => {
   const from = location.state?.from?.pathname || '/dashboard';
 
   const [show2FA, setShow2FA] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [tempUserId, setTempUserId] = useState(null);
   const [twoFactorToken, setTwoFactorToken] = useState('');
 
@@ -123,10 +124,19 @@ const Login = () => {
             <div className="relative">
               <Input
                 label="Password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 {...register('password', { required: 'Password is required' })}
                 error={errors.password}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                  </button>
+                }
               />
             </div>
 

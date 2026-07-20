@@ -8,6 +8,26 @@ import LoginHistory from '../models/LoginHistory.js';
 import Session from '../models/Session.js';
 import speakeasy from 'speakeasy';
 
+// Helper to get the correct frontend URL dynamically based on the request origin
+const getFrontendUrl = (req) => {
+  const reqOrigin = req.headers.origin || req.headers.referer;
+  
+  if (reqOrigin) {
+    try {
+      const originUrl = new URL(reqOrigin);
+      const baseOrigin = `${originUrl.protocol}//${originUrl.host}`;
+      
+      if (baseOrigin.endsWith('.vercel.app') || baseOrigin === process.env.FRONTEND_URL || baseOrigin.includes('localhost')) {
+        return baseOrigin;
+      }
+    } catch (e) {
+      // Ignore Invalid URL
+    }
+  }
+  
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
+};
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -41,7 +61,7 @@ export const register = async (req, res, next) => {
       await user.save();
 
       // In a real scenario, send the email here
-      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
+      const verificationUrl = `${getFrontendUrl(req)}/verify-email/${verificationToken}`;
       const message = `Please verify your email by clicking: \n\n ${verificationUrl}`;
       
       try {
@@ -194,7 +214,7 @@ export const forgotPassword = async (req, res, next) => {
     await user.save();
 
     // Create reset url
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+    const resetUrl = `${getFrontendUrl(req)}/reset-password/${resetToken}`;
 
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please click: \n\n ${resetUrl}`;
 
