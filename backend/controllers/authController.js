@@ -60,15 +60,46 @@ export const register = async (req, res, next) => {
       
       await user.save();
 
-      // In a real scenario, send the email here
       const verificationUrl = `${getFrontendUrl(req)}/verify-email/${verificationToken}`;
       const message = `Please verify your email by clicking: \n\n ${verificationUrl}`;
+      
+      const html = `
+        <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border: 1px solid #eaeaea;">
+          <div style="background-color: #4f46e5; padding: 32px 24px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Passora</h1>
+          </div>
+          <div style="padding: 40px 32px;">
+            <h2 style="color: #1f2937; font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px;">Welcome to Passora!</h2>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+              Hello ${fullName.split(' ')[0]}, <br/><br/>
+              Thank you for signing up for Passora. To complete your registration and secure your new account, please verify your email address by clicking the button below.
+            </p>
+            <div style="text-align: center; margin: 36px 0;">
+              <a href="${verificationUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 14px 32px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; display: inline-block; transition: background-color 0.2s;">Verify Your Email</a>
+            </div>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+              If you did not sign up for Passora, you can safely ignore this email.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 0;">
+              If you're having trouble clicking the verification button, copy and paste the URL below into your web browser:<br/>
+              <a href="${verificationUrl}" style="color: #4f46e5; text-decoration: underline; word-break: break-all;">${verificationUrl}</a>
+            </p>
+          </div>
+          <div style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #eaeaea;">
+            <p style="color: #9ca3af; font-size: 13px; margin: 0;">
+              &copy; ${new Date().getFullYear()} Passora. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `;
       
       try {
         await sendEmail({
           email: user.email,
-          subject: 'Email Verification - Passora',
+          subject: 'Verify your Email - Passora',
           message,
+          html,
         });
       } catch (error) {
         console.error('Email sending failed, but user created');
@@ -217,12 +248,44 @@ export const forgotPassword = async (req, res, next) => {
     const resetUrl = `${getFrontendUrl(req)}/reset-password/${resetToken}`;
 
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please click: \n\n ${resetUrl}`;
+    
+    const html = `
+      <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border: 1px solid #eaeaea;">
+        <div style="background-color: #4f46e5; padding: 32px 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Passora</h1>
+        </div>
+        <div style="padding: 40px 32px;">
+          <h2 style="color: #1f2937; font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px;">Password Reset Request</h2>
+          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+            Hello, <br/><br/>
+            We received a request to reset the password for your Passora account associated with this email address. If you made this request, please click the button below to choose a new password.
+          </p>
+          <div style="text-align: center; margin: 36px 0;">
+            <a href="${resetUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 14px 32px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; display: inline-block; transition: background-color 0.2s;">Reset Your Password</a>
+          </div>
+          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+            This password reset link is only valid for the next <strong>10 minutes</strong>. If you did not request a password reset, you can safely ignore this email and your password will remain unchanged.
+          </p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
+          <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 0;">
+            If you're having trouble clicking the password reset button, copy and paste the URL below into your web browser:<br/>
+            <a href="${resetUrl}" style="color: #4f46e5; text-decoration: underline; word-break: break-all;">${resetUrl}</a>
+          </p>
+        </div>
+        <div style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #eaeaea;">
+          <p style="color: #9ca3af; font-size: 13px; margin: 0;">
+            &copy; ${new Date().getFullYear()} Passora. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `;
 
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Password Reset Token - Passora',
+        subject: 'Password Reset Request - Passora',
         message,
+        html,
       });
 
       res.status(200).json({ success: true, data: 'Email sent' });
