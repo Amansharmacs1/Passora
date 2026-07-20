@@ -11,9 +11,28 @@ import crypto from 'crypto';
 
 const rpName = 'Passora';
 // Parse the FRONTEND_URL to get the rpID (hostname)
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const rpID = process.env.NODE_ENV === 'production' ? new URL(frontendUrl).hostname : 'localhost';
-const origin = process.env.NODE_ENV === 'production' ? frontendUrl : 'http://localhost:5173';
+// Helper to get dynamic origin/rpID from request
+const getDynamicOriginAndRPID = (req) => {
+  if (process.env.NODE_ENV !== 'production') {
+    return { rpID: 'localhost', origin: 'http://localhost:5173' };
+  }
+  
+  const reqOrigin = req.headers.origin || process.env.FRONTEND_URL;
+  if (reqOrigin && (reqOrigin.endsWith('.vercel.app') || reqOrigin.startsWith('chrome-extension://') || reqOrigin === process.env.FRONTEND_URL)) {
+    try {
+      // For chrome extensions, rpID is the extension ID
+      if (reqOrigin.startsWith('chrome-extension://')) {
+        return { rpID: new URL(reqOrigin).hostname, origin: reqOrigin };
+      }
+      return { rpID: new URL(reqOrigin).hostname, origin: reqOrigin };
+    } catch (e) {
+      // Ignore
+    }
+  }
+  
+  const defaultUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  return { rpID: new URL(defaultUrl).hostname, origin: defaultUrl };
+};
 
 // Temporary store for challenges in memory (in production use Redis)
 // Key: userId, Value: current challenge string
@@ -28,6 +47,7 @@ export const generateRegOptions = async (req, res) => {
     const user = await User.findById(req.user._id);
     const userPasskeys = await Passkey.find({ userId: user._id });
 
+    const { rpID } = getDynamicOriginAndRPID(req);
     const options = await generateRegistrationOptions({
       rpName,
       rpID,
@@ -70,6 +90,7 @@ export const verifyRegResponse = async (req, res) => {
       return res.status(400).json({ message: 'No registration challenge found' });
     }
 
+    const { rpID, origin } = getDynamicOriginAndRPID(req);
     const verification = await verifyRegistrationResponse({
       response: body,
       expectedChallenge,
@@ -118,6 +139,7 @@ export const generateAuthOptions = async (req, res) => {
       }
     }
 
+    const { rpID } = getDynamicOriginAndRPID(req);
     // Generate options. If no email is provided, it relies on discoverable credentials (Conditional UI)
     const options = await generateAuthenticationOptions({
       rpID,
@@ -162,6 +184,7 @@ export const verifyAuthResponse = async (req, res) => {
       return res.status(400).json({ message: 'No authentication challenge found.' });
     }
 
+    const { rpID, origin } = getDynamicOriginAndRPID(req);
     const verification = await verifyAuthenticationResponse({
       response: body,
       expectedChallenge,

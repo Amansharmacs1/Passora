@@ -30,8 +30,27 @@ const app = express();
 
 // Security Middleware
 app.use(helmet());
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or extension background scripts)
+    if (!origin) return callback(null, true);
+    
+    // Allow Vercel deployments, localhost, and Chrome extensions dynamically
+    if (allowedOrigins.includes(origin) || 
+        origin.endsWith('.vercel.app') || 
+        origin.startsWith('chrome-extension://')) {
+      return callback(null, true);
+    }
+    
+    // Fallback error
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
