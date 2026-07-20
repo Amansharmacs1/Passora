@@ -10,7 +10,7 @@
     "clipboardWrite"
   ],
   "host_permissions": [
-    "http://localhost:5000/*"
+    "https://passora.onrender.com/*"
   ],
   "action": {
     "default_popup": "popup.html",

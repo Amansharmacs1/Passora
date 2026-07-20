@@ -116,7 +116,7 @@ docker-compose up --build -d
 ```
 
 - Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5000`
+- Backend API: `https://passora.onrender.com`
 
 ---
 

@@ -10,9 +10,10 @@ import generateToken from '../utils/generateToken.js';
 import crypto from 'crypto';
 
 const rpName = 'Passora';
-// Define RP ID based on environment, typically the domain. For local dev, use localhost.
-const rpID = process.env.NODE_ENV === 'production' ? 'your-domain.com' : 'localhost';
-const origin = process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : 'http://localhost:5173';
+// Parse the FRONTEND_URL to get the rpID (hostname)
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const rpID = process.env.NODE_ENV === 'production' ? new URL(frontendUrl).hostname : 'localhost';
+const origin = process.env.NODE_ENV === 'production' ? frontendUrl : 'http://localhost:5173';
 
 // Temporary store for challenges in memory (in production use Redis)
 // Key: userId, Value: current challenge string

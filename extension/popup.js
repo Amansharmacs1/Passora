@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://passora.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const loginView = document.getElementById('login-view');
