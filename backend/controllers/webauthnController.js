@@ -99,15 +99,15 @@ export const verifyRegResponse = async (req, res) => {
     });
 
     if (verification.verified && verification.registrationInfo) {
-      const { credentialPublicKey, credentialID, counter } = verification.registrationInfo;
+      const { credential } = verification.registrationInfo;
 
       // Save passkey
       await Passkey.create({
         userId: user._id,
-        credentialID: Buffer.from(credentialID).toString('base64url'),
-        credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-        counter,
-        transports: clientResponse.response.transports || [],
+        credentialID: credential.id,
+        credentialPublicKey: Buffer.from(credential.publicKey).toString('base64url'),
+        counter: credential.counter,
+        transports: credential.transports || [],
         deviceName: deviceName || 'New Device',
       });
 
@@ -190,9 +190,9 @@ export const verifyAuthResponse = async (req, res) => {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: Buffer.from(passkey.credentialID, 'base64url'),
-        credentialPublicKey: Buffer.from(passkey.credentialPublicKey, 'base64url'),
+      credential: {
+        id: passkey.credentialID,
+        publicKey: Buffer.from(passkey.credentialPublicKey, 'base64url'),
         counter: passkey.counter,
         transports: passkey.transports,
       },
