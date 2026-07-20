@@ -61,6 +61,7 @@ export const generateRegOptions = async (req, res) => {
         transports: passkey.transports,
       })),
       authenticatorSelection: {
+        authenticatorAttachment: 'platform',
         residentKey: 'required',
         userVerification: 'preferred',
       }
